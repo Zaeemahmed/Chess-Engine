@@ -1,6 +1,7 @@
 import pygame
 import sys
 from game_state import GameState
+from move import Move
 from constants import *
 
 # ----------- Initialize Pygame -----------
@@ -50,6 +51,28 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+    
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            col = mouse_x // SQUARE_SIZE
+            row = mouse_y // SQUARE_SIZE
+            print(f"Clicked on square: ({row}, {col})")
+
+            # Two cases: piece is not selected or piece is selected
+            if(game_state.square_selected == ()):
+                if(game_state.board[row][col] != "--" and game_state.board[row][col][0] == game_state.player_turn):
+                    game_state.square_selected = (row, col)
+                else:
+                    continue
+            
+            else:
+                if(game_state.square_selected == (row, col) or game_state.board[row][col][0] == game_state.player_turn):
+                    continue
+                start_sq = game_state.square_selected
+                end_sq = (row, col)
+                move = Move(start_sq, end_sq, game_state.board)
+                game_state.make_move(move)
+                game_state.square_selected = ()
 
     draw_board(screen, game_state.board)
     pygame.display.flip()
