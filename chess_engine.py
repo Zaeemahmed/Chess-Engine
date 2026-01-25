@@ -1,6 +1,7 @@
 import pygame
 import sys
 from game_state import GameState
+from move_generator import MoveGenerator
 from move import Move
 from constants import *
 
@@ -23,7 +24,7 @@ def load_piece_images():
     return images
 
 # ----------- Draw Chessboard -----------
-def draw_board(surface, board):
+def draw_board(surface, board, possible_moves=[]):
     for row in range(BOARD_SIZE):
         for col in range(BOARD_SIZE):
             color = LIGHT_COLOR if (row + col) % 2 == 0 else DARK_COLOR
@@ -42,8 +43,14 @@ def draw_board(surface, board):
                     (col * SQUARE_SIZE, row * SQUARE_SIZE)
                 )
 
+            if((row, col) in possible_moves):
+                pygame.draw.rect(surface, HIGHLIGHT_COLOR, rect, 5)
+
 game_state = GameState()
+move_generator = MoveGenerator()
 piece_images = load_piece_images()
+
+possible_moves = []
 
 # ----------- Main Loop -----------
 running = True
@@ -62,19 +69,24 @@ while running:
             if(game_state.square_selected == ()):
                 if(game_state.board[row][col] != "--" and game_state.board[row][col][0] == game_state.player_turn):
                     game_state.square_selected = (row, col)
+                    possible_moves = move_generator.generate_moves(game_state.board, (row, col))
                 else:
                     continue
             
             else:
-                if(game_state.square_selected == (row, col) or game_state.board[row][col][0] == game_state.player_turn):
+                if(game_state.square_selected == (row, col) or game_state.board[row][col][0] == game_state.player_turn or (row, col) not in possible_moves):
+                    if(game_state.board[row][col][0] == game_state.player_turn):
+                        game_state.square_selected = (row, col)
+                        possible_moves = move_generator.generate_moves(game_state.board, (row, col))
                     continue
                 start_sq = game_state.square_selected
                 end_sq = (row, col)
                 move = Move(start_sq, end_sq, game_state.board)
                 game_state.make_move(move)
                 game_state.square_selected = ()
+                possible_moves = []
 
-    draw_board(screen, game_state.board)
+    draw_board(screen, game_state.board, possible_moves)
     pygame.display.flip()
     clock.tick(60)
 
